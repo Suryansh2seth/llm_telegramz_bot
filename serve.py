@@ -1,7 +1,21 @@
+import os
+import threading
 import http.server
 import socketserver
-import os
+import logging
 
+# ── Start bot in background thread ────────────────────────────────────────
+def run_bot():
+    try:
+        import bot
+        bot.main()
+    except Exception as e:
+        logging.error(f"Bot error: {e}")
+
+bot_thread = threading.Thread(target=run_bot, daemon=True)
+bot_thread.start()
+
+# ── Serve miniapp on PORT ─────────────────────────────────────────────────
 PORT = int(os.environ.get("PORT", 8080))
 DIRECTORY = os.path.join(os.path.dirname(__file__), "miniapp")
 
@@ -10,8 +24,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def log_message(self, format, *args):
-        pass  # silence logs
+        pass
 
+print(f"Serving miniapp on port {PORT}")
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print(f"Serving miniapp on port {PORT}")
     httpd.serve_forever()
