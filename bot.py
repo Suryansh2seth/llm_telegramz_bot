@@ -34,9 +34,9 @@ client = OpenAI(
 #  ACCESS CONTROL
 # ════════════════════════════════════════════════════════════════════════════
 
-OWNER_ID = 0  # ← Replace with your Telegram user ID
+OWNER_ID = 1898491690  # ← Replace with your Telegram user ID  # ← Replace with your Telegram user ID
 
-APPROVED_FRIENDS = {
+APPROVED_FRIENDS = {7560587006: "Priyanshu",
     # 123456789: "Kaustuab",
 }
 
