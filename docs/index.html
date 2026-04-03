@@ -1,1 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Advisor</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #222222;
+    --accent: #c8f542;
+    --accent-dim: rgba(200, 245, 66, 0.12);
+    --accent-dim2: rgba(200, 245, 66, 0.06);
+    --text: #f0f0f0;
+    --text-muted: #666;
+    --text-dim: #999;
+    --user-bubble: #1e1e1e;
+    --bot-bubble: #141414;
+    --sidebar-w: 220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+  }
+
+  /* ── Layout ── */
+  #app {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    z-index: 10;
+  }
+
+  #sidebar-header {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #sidebar-header .logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  #new-topic-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,245,66,0.25);
+    border-radius: 8px;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+
+  #new-topic-btn:hover { background: rgba(200,245,66,0.18); }
+  #new-topic-btn .plus { font-size: 16px; line-height: 1; }
+
+  #topics-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 8px;
+    scrollbar-width: none;
+  }
+  #topics-list::-webkit-scrollbar { display: none; }
+
+  .topic-item {
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    transition: background 0.12s;
+    position: relative;
+  }
+
+  .topic-item:hover { background: var(--surface2); }
+
+  .topic-item.active {
+    background: var(--accent-dim);
+  }
+
+  .topic-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .topic-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+
+  .topic-item.active .topic-dot { background: var(--accent); }
+
+  .topic-name {
+    font-size: 13px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    transition: color 0.12s;
+  }
+
+  .topic-item.active .topic-name { color: var(--text); }
+
+  .topic-delete {
+    opacity: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: opacity 0.12s, color 0.12s;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .topic-item:hover .topic-delete { opacity: 1; }
+  .topic-delete:hover { color: #ff5555; }
+
+  #sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Main chat area ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* ── Chat header ── */
+  #chat-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+  }
+
+  #menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 2px 6px 2px 0;
+  }
+
+  #active-topic-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    flex: 1;
+  }
+
+  #model-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Messages ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+    animation: msgIn 0.2s ease;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.bot { align-self: flex-start; align-items: flex-start; }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.6;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,245,66,0.2);
+    color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.bot .msg-bubble {
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 0 4px;
+  }
+
+  /* Typing indicator */
+  .typing-bubble {
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Empty state */
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  #empty-state .empty-icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+    opacity: 0.4;
+  }
+
+  /* ── Input area ── */
+  #input-area {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  #msg-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    max-height: 120px;
+    min-height: 42px;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+    scrollbar-width: none;
+  }
+
+  #msg-input::-webkit-scrollbar { display: none; }
+  #msg-input:focus { border-color: rgba(200,245,66,0.4); }
+  #msg-input::placeholder { color: var(--text-muted); }
+
+  #send-btn {
+    width: 42px;
+    height: 42px;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  #send-btn:hover { opacity: 0.9; }
+  #send-btn:active { transform: scale(0.95); }
+  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #send-btn svg { width: 18px; height: 18px; }
+
+  /* ── New topic modal ── */
+  #modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+
+  #modal-overlay.show { display: flex; }
+
+  #modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    width: min(320px, 90vw);
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  #modal h3 {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  #topic-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.15s;
+  }
+
+  #topic-input:focus { border-color: rgba(200,245,66,0.4); }
+
+  .modal-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  .modal-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn.cancel { background: var(--surface2); color: var(--text-dim); }
+  .modal-btn.create { background: var(--accent); color: #0a0a0a; }
+
+  /* ── Mobile overlay sidebar ── */
+  #sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 520px) {
+    :root { --sidebar-w: 240px; }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      transform: translateX(-100%);
+    }
+
+    #sidebar.open { transform: translateX(0); }
+    #sidebar-overlay.show { display: block; }
+    #menu-btn { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <div class="logo">⬡ Advisor</div>
+      <button id="new-topic-btn" onclick="openModal()">
+        <span class="plus">+</span> New topic
+      </button>
+    </div>
+    <div id="topics-list"></div>
+    <div id="sidebar-footer" id="model-info">llama-3.3-70b</div>
+  </div>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="chat-header">
+      <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div id="active-topic-name">General</div>
+      <div id="model-badge">llama</div>
+    </div>
+
+    <div id="messages">
+      <div id="empty-state">
+        <div class="empty-icon">◎</div>
+        <div>start the conversation</div>
+      </div>
+    </div>
+
+    <div id="input-area">
+      <textarea id="msg-input" placeholder="Ask anything..." rows="1"></textarea>
+      <button id="send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- New Topic Modal -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal">
+    <h3>New Topic</h3>
+    <input id="topic-input" type="text" placeholder="e.g. IPMAT Quant, Business Ideas..." maxlength="40">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn create" onclick="createTopic()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Telegram WebApp init ──────────────────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let topics = { "General": [] };
+let activeTopic = "General";
+let isTyping = false;
+
+const BOT_USERNAME = "YOUR_BOT_USERNAME"; // ← Replace with your bot username
+
+// ── DOM refs ──────────────────────────────────────────────────────────────
+const topicsList = document.getElementById('topics-list');
+const messagesEl = document.getElementById('messages');
+const msgInput = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
+const activeTopicName = document.getElementById('active-topic-name');
+const emptyState = document.getElementById('empty-state');
+
+// ── Render sidebar topics ─────────────────────────────────────────────────
+function renderTopics() {
+  topicsList.innerHTML = '';
+  Object.keys(topics).forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'topic-item' + (name === activeTopic ? ' active' : '');
+    item.innerHTML = `
+      <div class="topic-dot"></div>
+      <div class="topic-name">${escHtml(name)}</div>
+      ${name !== 'General' ? `<div class="topic-delete" onclick="deleteTopic(event, '${escHtml(name)}')">✕</div>` : ''}
+    `;
+    item.onclick = (e) => {
+      if (e.target.classList.contains('topic-delete')) return;
+      switchTopic(name);
+    };
+    topicsList.appendChild(item);
+  });
+}
+
+// ── Render messages ───────────────────────────────────────────────────────
+function renderMessages() {
+  const msgs = topics[activeTopic] || [];
+  messagesEl.innerHTML = '';
+
+  if (msgs.length === 0) {
+    const empty = document.createElement('div');
+    empty.id = 'empty-state';
+    empty.innerHTML = '<div class="empty-icon">◎</div><div>start the conversation</div>';
+    messagesEl.appendChild(empty);
+    return;
+  }
+
+  msgs.forEach(msg => {
+    appendMessage(msg.role, msg.content, msg.time, false);
+  });
+
+  scrollToBottom();
+}
+
+function appendMessage(role, content, time, animate = true) {
+  const existing = document.getElementById('empty-state');
+  if (existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (!animate) div.style.animation = 'none';
+
+  const t = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  div.innerHTML = `
+    <div class="msg-bubble">${escHtml(content)}</div>
+    <div class="msg-time">${t}</div>
+  `;
+  messagesEl.appendChild(div);
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── Send message ──────────────────────────────────────────────────────────
+async function sendMessage() {
+  const text = msgInput.value.trim();
+  if (!text || isTyping) return;
+
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Add to local state
+  if (!topics[activeTopic]) topics[activeTopic] = [];
+  topics[activeTopic].push({ role: 'user', content: text, time });
+
+  appendMessage('user', text, time);
+  msgInput.value = '';
+  autoResize();
+  scrollToBottom();
+
+  isTyping = true;
+  sendBtn.disabled = true;
+  showTyping();
+
+  try {
+    // Send via Telegram bot command
+    // The bot receives this and replies back in the Mini App chat
+    if (tg) {
+      tg.sendData(JSON.stringify({
+        action: 'message',
+        topic: activeTopic,
+        text: text
+      }));
+    }
+
+    // Simulate response for demo (replace with actual bot webhook)
+    // In production the bot sends the response back via answerWebAppQuery
+    setTimeout(() => {
+      hideTyping();
+      const reply = "[Bot response will appear here — connect your Railway backend]";
+      const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      topics[activeTopic].push({ role: 'bot', content: reply, time: replyTime });
+      appendMessage('bot', reply, replyTime);
+      scrollToBottom();
+      isTyping = false;
+      sendBtn.disabled = false;
+    }, 1200);
+
+  } catch (err) {
+    hideTyping();
+    appendMessage('bot', '⚠️ Connection error. Try again.', time);
+    isTyping = false;
+    sendBtn.disabled = false;
+  }
+}
+
+// ── Topic management ──────────────────────────────────────────────────────
+function switchTopic(name) {
+  activeTopic = name;
+  activeTopicName.textContent = name;
+  renderTopics();
+  renderMessages();
+  closeSidebar();
+}
+
+function deleteTopic(e, name) {
+  e.stopPropagation();
+  if (name === 'General') return;
+  if (!confirm(`Delete topic "${name}"?`)) return;
+  delete topics[name];
+  if (activeTopic === name) switchTopic('General');
+  else renderTopics();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('topic-input').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('topic-input').value = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function createTopic() {
+  const name = document.getElementById('topic-input').value.trim();
+  if (!name) return;
+  if (topics[name]) {
+    switchTopic(name);
+    closeModal();
+    return;
+  }
+  topics[name] = [];
+  switchTopic(name);
+  closeModal();
+}
+
+// ── Mobile sidebar ────────────────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ── Input auto-resize ─────────────────────────────────────────────────────
+function autoResize() {
+  msgInput.style.height = 'auto';
+  msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+}
+
+msgInput.addEventListener('input', autoResize);
+msgInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// ── Escape HTML ───────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Topic input enter key ─────────────────────────────────────────────────
+document.getElementById('topic-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') createTopic();
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderTopics();
+renderMessages();
+</script>
+</body>
+</html>
