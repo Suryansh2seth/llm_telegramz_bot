@@ -6,7 +6,10 @@ import logging
 
 # ── Start bot in background thread ────────────────────────────────────────
 def run_bot():
+    import asyncio
     try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         import bot
         bot.main()
     except Exception as e:
