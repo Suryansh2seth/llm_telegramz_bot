@@ -16,6 +16,7 @@ from telegram.ext import (
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 KRUTRIM_API_KEY = os.getenv("KRUTRIM_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -24,19 +25,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ── Krutrim client ───────────────────────────────────────────────────────────
-client = OpenAI(
+# ── Clients ───────────────────────────────────────────────────────────────────
+krutrim_client = OpenAI(
     api_key=KRUTRIM_API_KEY,
     base_url="https://cloud.olakrutrim.com/v1",
+)
+
+openrouter_client = OpenAI(
+    api_key=OPENROUTER_API_KEY,
+    base_url="https://openrouter.ai/api/v1",
 )
 
 # ════════════════════════════════════════════════════════════════════════════
 #  ACCESS CONTROL
 # ════════════════════════════════════════════════════════════════════════════
 
-OWNER_ID = 1898491690  # ← Replace with your Telegram user ID  # ← Replace with your Telegram user ID
+OWNER_ID = 1898491690  # ← Replace with your Telegram user ID
 
-APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",
+APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607: "slippedsloppy0o0",
     # 123456789: "Kaustuab",
 }
 
@@ -48,15 +54,45 @@ def get_access_level(user_id: int) -> str:
     return "blocked"
 
 # ════════════════════════════════════════════════════════════════════════════
-#  AVAILABLE MODELS
+#  MODEL REGISTRY — Krutrim + OpenRouter free pool
 # ════════════════════════════════════════════════════════════════════════════
 
 MODELS = {
-    "llama": "Llama-3.3-70B-Instruct",
-    "mistral": "Mistral-7B-Instruct",
-    "gemma": "gemma-3-27b-it",
+
+    # ── Krutrim models ──────────────────────────────────────────────────────
+    "llama70b":      {"provider": "krutrim", "model": "Llama-3.3-70B-Instruct",          "label": "Llama 3.3 70B (Krutrim) ⭐"},
+    "llama8b":       {"provider": "krutrim", "model": "Meta-Llama-3-8B-Instruct",         "label": "Llama 3 8B (Krutrim)"},
+    "mistral7b":     {"provider": "krutrim", "model": "Mistral-7B-Instruct",              "label": "Mistral 7B (Krutrim)"},
+    "krutrim":       {"provider": "krutrim", "model": "Krutrim-spectre-v2",               "label": "Krutrim Spectre v2 (India's own)"},
+
+    # ── OpenRouter — Top free models (April 2026) ───────────────────────────
+    "deepseek":      {"provider": "openrouter", "model": "deepseek/deepseek-chat-v3-0324:free",     "label": "DeepSeek V3 (free) 🔥"},
+    "deepseek-r1":   {"provider": "openrouter", "model": "deepseek/deepseek-r1:free",               "label": "DeepSeek R1 Reasoning (free)"},
+    "llama4":        {"provider": "openrouter", "model": "meta-llama/llama-4-maverick:free",        "label": "Llama 4 Maverick (free)"},
+    "llama-or":      {"provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free",  "label": "Llama 3.3 70B (OpenRouter free)"},
+    "qwen3-235b":    {"provider": "openrouter", "model": "qwen/qwen3-235b-a22b:free",               "label": "Qwen3 235B (free)"},
+    "qwen3-30b":     {"provider": "openrouter", "model": "qwen/qwen3-30b-a3b:free",                 "label": "Qwen3 30B (free)"},
+    "qwen3-coder":   {"provider": "openrouter", "model": "qwen/qwen3-coder-480b-a35b:free",         "label": "Qwen3 Coder 480B (free) 💻"},
+    "gemma3-27b":    {"provider": "openrouter", "model": "google/gemma-3-27b-it:free",              "label": "Gemma 3 27B (free)"},
+    "gemma3-12b":    {"provider": "openrouter", "model": "google/gemma-3-12b-it:free",              "label": "Gemma 3 12B (free)"},
+    "gemma3-4b":     {"provider": "openrouter", "model": "google/gemma-3-4b-it:free",               "label": "Gemma 3 4B (fast, free)"},
+    "nemotron":      {"provider": "openrouter", "model": "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", "label": "NVIDIA Nemotron 253B (free)"},
+    "nemotron-s":    {"provider": "openrouter", "model": "nvidia/nemotron-3-super-49b:free",        "label": "NVIDIA Nemotron Super 49B (free)"},
+    "mistral-s":     {"provider": "openrouter", "model": "mistralai/mistral-small-3.1-24b-instruct:free", "label": "Mistral Small 3.1 24B (free)"},
+    "mistral-dev":   {"provider": "openrouter", "model": "mistralai/devstral-small:free",           "label": "Devstral Small - Coding (free)"},
+    "phi4":          {"provider": "openrouter", "model": "microsoft/phi-4:free",                    "label": "Microsoft Phi-4 (free)"},
+    "phi4-mini":     {"provider": "openrouter", "model": "microsoft/phi-4-mini-instruct:free",      "label": "Microsoft Phi-4 Mini (fast, free)"},
+    "grok":          {"provider": "openrouter", "model": "x-ai/grok-4-fast:free",                   "label": "Grok 4 Fast (free) ⚡"},
+    "glm":           {"provider": "openrouter", "model": "zhipu-ai/glm-4.5-air:free",               "label": "GLM 4.5 Air (free)"},
+    "step":          {"provider": "openrouter", "model": "stepfun-ai/step-3-5-flash:free",          "label": "Step 3.5 Flash (free)"},
+    "minimax":       {"provider": "openrouter", "model": "minimax/minimax-m2.5:free",               "label": "MiniMax M2.5 (free)"},
+    "arcee":         {"provider": "openrouter", "model": "arcee-ai/trinity-large:free",             "label": "Arcee Trinity Large 400B (free)"},
+    "internlm":      {"provider": "openrouter", "model": "internlm/internlm3-8b-instruct:free",     "label": "InternLM3 8B (free)"},
+    "moonlight":     {"provider": "openrouter", "model": "moonshotai/moonlight-16a-instruct:free",  "label": "Moonlight 16A (free)"},
+    "auto":          {"provider": "openrouter", "model": "openrouter/auto",                         "label": "OpenRouter Auto (picks best free model)"},
 }
-DEFAULT_MODEL = "llama"
+
+DEFAULT_MODEL = "llama70b"
 
 # ════════════════════════════════════════════════════════════════════════════
 #  SYSTEM PROMPTS
@@ -78,7 +114,7 @@ Your job:
 - Give honest, unfiltered feedback — no sugarcoating
 - Keep responses concise and actionable unless he asks for depth
 
-If the user shares a memory (prefixed with [MEMORY]), treat it as established fact about Suryansh.
+If memories are provided (prefixed with [MEMORY]), treat them as established facts.
 
 Tone: Like a brilliant older mentor who respects his intelligence. Direct. No fluff.
 """
@@ -128,14 +164,14 @@ def get_user_data(data: dict, user_id: int) -> dict:
     return data[uid]
 
 # ════════════════════════════════════════════════════════════════════════════
-#  KRUTRIM API
+#  AI API CALL — routes to Krutrim or OpenRouter
 # ════════════════════════════════════════════════════════════════════════════
 
-def ask_krutrim(user_id: int, user_message: str, data: dict) -> str:
+def ask_ai(user_id: int, user_message: str, data: dict) -> str:
     ud = get_user_data(data, user_id)
     topic = ud["active_topic"]
     model_key = ud.get("model", DEFAULT_MODEL)
-    model_name = MODELS.get(model_key, MODELS[DEFAULT_MODEL])
+    model_info = MODELS.get(model_key, MODELS[DEFAULT_MODEL])
     memories = ud.get("memories", [])
 
     if topic not in ud["topics"]:
@@ -148,20 +184,37 @@ def ask_krutrim(user_id: int, user_message: str, data: dict) -> str:
 
     messages = [{"role": "system", "content": get_system_prompt(user_id, memories)}] + ud["topics"][topic]
 
+    provider = model_info["provider"]
+    model_name = model_info["model"]
+
     try:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=messages,
-            max_tokens=1024,
-            temperature=0.7,
-        )
+        if provider == "krutrim":
+            if not KRUTRIM_API_KEY:
+                return "⚠️ Krutrim API key not set."
+            response = krutrim_client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                max_tokens=1024,
+                temperature=0.7,
+            )
+        else:  # openrouter
+            if not OPENROUTER_API_KEY:
+                return "⚠️ OpenRouter API key not set. Add OPENROUTER_API_KEY in Railway variables."
+            response = openrouter_client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                max_tokens=1024,
+                temperature=0.7,
+            )
+
         reply = response.choices[0].message.content.strip()
         ud["topics"][topic].append({"role": "assistant", "content": reply})
         save_data(data)
         return reply
+
     except Exception as e:
-        logger.error(f"Krutrim API error: {e}")
-        return f"⚠️ Error: {e}"
+        logger.error(f"AI API error ({provider}): {e}")
+        return f"⚠️ Error from {provider}: {e}"
 
 # ════════════════════════════════════════════════════════════════════════════
 #  TELEGRAM HANDLERS
@@ -182,7 +235,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if level == "owner":
         await update.message.reply_text(
-            "🧠 *Your private AI advisor — v3*\n\n"
+            "🧠 *Your private AI advisor — v4*\n\n"
             "*Topics:*\n"
             "/new `name` — create topic\n"
             "/switch `name` — switch topic\n"
@@ -195,7 +248,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/forget `fact` — remove a memory\n\n"
             "*Model:*\n"
             "/model — current model\n"
-            "/setmodel `name` — switch model\n\n"
+            "/models — list all models\n"
+            "/setmodel `key` — switch model\n\n"
             "*Admin:*\n"
             "/admin — view all users\n"
             "/addme — get your Telegram ID",
@@ -211,7 +265,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "/clear — clear current topic\n"
             "/remember `fact` — save a memory\n"
             "/model — current model\n"
-            "/setmodel `name` — switch model",
+            "/models — list all models\n"
+            "/setmodel `key` — switch model",
             parse_mode="Markdown"
         )
 
@@ -222,116 +277,85 @@ async def new_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
         await update.message.reply_text("Usage: /new `topic name`", parse_mode="Markdown")
         return
-
     topic_name = " ".join(context.args)
     ud = get_user_data(data, user_id)
-
     if topic_name in ud["topics"]:
         ud["active_topic"] = topic_name
         save_data(data)
-        await update.message.reply_text(f"▶ Switched to existing topic: *{topic_name}*", parse_mode="Markdown")
+        await update.message.reply_text(f"▶ Switched to existing: *{topic_name}*", parse_mode="Markdown")
         return
-
     ud["topics"][topic_name] = []
     ud["active_topic"] = topic_name
     save_data(data)
-    await update.message.reply_text(f"✅ Created and switched to: *{topic_name}*", parse_mode="Markdown")
+    await update.message.reply_text(f"✅ Created: *{topic_name}*", parse_mode="Markdown")
 
 async def switch_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
         await update.message.reply_text("Usage: /switch `topic name`", parse_mode="Markdown")
         return
-
     topic_name = " ".join(context.args)
     ud = get_user_data(data, user_id)
-
     if topic_name not in ud["topics"]:
-        topics = ", ".join(ud["topics"].keys())
-        await update.message.reply_text(
-            f"Topic *{topic_name}* not found.\nYour topics: {topics}",
-            parse_mode="Markdown"
-        )
+        await update.message.reply_text(f"Not found. Your topics: {', '.join(ud['topics'].keys())}")
         return
-
     ud["active_topic"] = topic_name
     save_data(data)
-    msg_count = len(ud["topics"][topic_name]) // 2
-    await update.message.reply_text(
-        f"🔀 Switched to *{topic_name}* — {msg_count} exchanges in history",
-        parse_mode="Markdown"
-    )
+    count = len(ud["topics"][topic_name]) // 2
+    await update.message.reply_text(f"🔀 *{topic_name}* — {count} exchanges", parse_mode="Markdown")
 
 async def list_topics(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     ud = get_user_data(data, user_id)
     active = ud["active_topic"]
     lines = []
     for name, history in ud["topics"].items():
         indicator = "▶" if name == active else "   "
-        count = len(history) // 2
-        lines.append(f"{indicator} *{name}* — {count} exchanges")
-
-    await update.message.reply_text(
-        "📂 *Your topics:*\n\n" + "\n".join(lines),
-        parse_mode="Markdown"
-    )
+        lines.append(f"{indicator} *{name}* — {len(history)//2} exchanges")
+    await update.message.reply_text("📂 *Your topics:*\n\n" + "\n".join(lines), parse_mode="Markdown")
 
 async def clear_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     ud = get_user_data(data, user_id)
     topic = ud["active_topic"]
     ud["topics"][topic] = []
     save_data(data)
-    await update.message.reply_text(f"🗑️ *{topic}* history cleared.", parse_mode="Markdown")
+    await update.message.reply_text(f"🗑️ *{topic}* cleared.", parse_mode="Markdown")
 
 async def delete_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
         await update.message.reply_text("Usage: /delete `topic name`", parse_mode="Markdown")
         return
-
     topic_name = " ".join(context.args)
     ud = get_user_data(data, user_id)
-
     if topic_name == "General":
-        await update.message.reply_text("Cannot delete the General topic.")
+        await update.message.reply_text("Cannot delete General.")
         return
-
     if topic_name not in ud["topics"]:
-        await update.message.reply_text(f"Topic *{topic_name}* not found.", parse_mode="Markdown")
+        await update.message.reply_text(f"Not found: *{topic_name}*", parse_mode="Markdown")
         return
-
     del ud["topics"][topic_name]
     if ud["active_topic"] == topic_name:
         ud["active_topic"] = "General"
-        await update.message.reply_text(
-            f"🗑️ *{topic_name}* deleted. Switched back to General.",
-            parse_mode="Markdown"
-        )
+        await update.message.reply_text(f"🗑️ *{topic_name}* deleted. Back to General.", parse_mode="Markdown")
     else:
         await update.message.reply_text(f"🗑️ *{topic_name}* deleted.", parse_mode="Markdown")
-
     save_data(data)
 
 # ── Memory commands ───────────────────────────────────────────────────────────
@@ -341,11 +365,9 @@ async def remember(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
         await update.message.reply_text("Usage: /remember `fact`", parse_mode="Markdown")
         return
-
     fact = " ".join(context.args)
     ud = get_user_data(data, user_id)
     ud["memories"].append(fact)
@@ -357,41 +379,30 @@ async def list_memories(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     ud = get_user_data(data, user_id)
     memories = ud.get("memories", [])
-
     if not memories:
         await update.message.reply_text("No memories yet. Use /remember `fact`", parse_mode="Markdown")
         return
-
     lines = [f"{i+1}. {m}" for i, m in enumerate(memories)]
-    await update.message.reply_text(
-        "🧠 *Saved memories:*\n\n" + "\n".join(lines),
-        parse_mode="Markdown"
-    )
+    await update.message.reply_text("🧠 *Saved memories:*\n\n" + "\n".join(lines), parse_mode="Markdown")
 
 async def forget(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
         await update.message.reply_text("Usage: /forget `exact fact`", parse_mode="Markdown")
         return
-
     fact = " ".join(context.args)
     ud = get_user_data(data, user_id)
-
     if fact in ud["memories"]:
         ud["memories"].remove(fact)
         save_data(data)
         await update.message.reply_text(f"🗑️ Forgotten: _{fact}_", parse_mode="Markdown")
     else:
-        await update.message.reply_text(
-            "Couldn't find that exact memory. Use /memories to see the full list."
-        )
+        await update.message.reply_text("Couldn't find that. Use /memories to see the list.")
 
 # ── Model commands ────────────────────────────────────────────────────────────
 
@@ -400,44 +411,55 @@ async def show_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     ud = get_user_data(data, user_id)
     current = ud.get("model", DEFAULT_MODEL)
-    model_name = MODELS.get(current, MODELS[DEFAULT_MODEL])
-    available = "\n".join([f"• `{k}` — {v}" for k, v in MODELS.items()])
-
+    info = MODELS.get(current, MODELS[DEFAULT_MODEL])
     await update.message.reply_text(
-        f"🤖 *Current model:* `{current}`\n_{model_name}_\n\n"
-        f"*Available:*\n{available}\n\n"
-        f"Switch: /setmodel `name`",
+        f"🤖 *Current model:* `{current}`\n"
+        f"_{info['label']}_\n"
+        f"Provider: {info['provider']}\n\n"
+        f"Use /models to see all options.",
         parse_mode="Markdown"
     )
+
+async def list_models(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if get_access_level(user_id) == "blocked":
+        await update.message.reply_text("🔒 Access denied.")
+        return
+
+    krutrim_lines = ["*── Krutrim models ──*"]
+    or_lines = ["*── OpenRouter free models ──*"]
+
+    for key, info in MODELS.items():
+        line = f"`{key}` — {info['label']}"
+        if info["provider"] == "krutrim":
+            krutrim_lines.append(line)
+        else:
+            or_lines.append(line)
+
+    msg = "\n".join(krutrim_lines) + "\n\n" + "\n".join(or_lines)
+    msg += "\n\nSwitch with: /setmodel `key`"
+    await update.message.reply_text(msg, parse_mode="Markdown")
 
 async def set_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Access denied.")
         return
-
     if not context.args:
-        await update.message.reply_text(
-            f"Usage: /setmodel `name`\nOptions: {', '.join(MODELS.keys())}",
-            parse_mode="Markdown"
-        )
+        await update.message.reply_text("Usage: /setmodel `key`\nSee /models for all options.", parse_mode="Markdown")
         return
-
     model_key = context.args[0].lower()
     if model_key not in MODELS:
-        await update.message.reply_text(
-            f"Unknown model. Available: {', '.join(MODELS.keys())}"
-        )
+        await update.message.reply_text(f"Unknown model key. Use /models to see all options.")
         return
-
     ud = get_user_data(data, user_id)
     ud["model"] = model_key
     save_data(data)
+    info = MODELS[model_key]
     await update.message.reply_text(
-        f"✅ Switched to *{model_key}*\n_{MODELS[model_key]}_",
+        f"✅ Switched to *{model_key}*\n_{info['label']}_\nProvider: {info['provider']}",
         parse_mode="Markdown"
     )
 
@@ -448,40 +470,24 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) != "owner":
         await update.message.reply_text("🔒 Owner only.")
         return
-
     lines = []
     for uid, ud in data.items():
         uid_int = int(uid)
-        if uid_int == OWNER_ID:
-            name = "You (Owner)"
-        elif uid_int in APPROVED_FRIENDS:
-            name = APPROVED_FRIENDS[uid_int]
-        else:
-            name = f"Unknown ({uid})"
-
+        name = "You (Owner)" if uid_int == OWNER_ID else APPROVED_FRIENDS.get(uid_int, f"Unknown ({uid})")
         topics = list(ud.get("topics", {}).keys())
         active = ud.get("active_topic", "General")
         model = ud.get("model", DEFAULT_MODEL)
         mem_count = len(ud.get("memories", []))
-        lines.append(
-            f"👤 *{name}*\n"
-            f"  Topics: {', '.join(topics)}\n"
-            f"  Active: {active} | Model: {model} | Memories: {mem_count}"
-        )
-
+        lines.append(f"👤 *{name}*\n  Topics: {', '.join(topics)}\n  Active: {active} | Model: {model} | Memories: {mem_count}")
     if not lines:
         await update.message.reply_text("No users yet.")
         return
-
-    await update.message.reply_text(
-        "🔐 *Admin Panel*\n\n" + "\n\n".join(lines),
-        parse_mode="Markdown"
-    )
+    await update.message.reply_text("🔐 *Admin Panel*\n\n" + "\n\n".join(lines), parse_mode="Markdown")
 
 async def addme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     await update.message.reply_text(
-        f"Your Telegram user ID:\n`{user_id}`\n\nShare with the bot owner to request access.",
+        f"Your Telegram user ID:\n`{user_id}`\n\nShare with bot owner to request access.",
         parse_mode="Markdown"
     )
 
@@ -492,28 +498,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_access_level(user_id) == "blocked":
         await update.message.reply_text("🔒 Private bot. You don't have access.")
         return
-
     ud = get_user_data(data, user_id)
     active = ud["active_topic"]
     user_text = update.message.text
-
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-    reply = ask_krutrim(user_id, user_text, data)
-
-    await update.message.reply_text(
-        f"_{active}_\n\n{reply}",
-        parse_mode="Markdown"
-    )
+    reply = ask_ai(user_id, user_text, data)
+    await update.message.reply_text(f"_{active}_\n\n{reply}", parse_mode="Markdown")
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    if not TELEGRAM_TOKEN or not KRUTRIM_API_KEY:
-        logger.error("Missing tokens in .env file")
+    if not TELEGRAM_TOKEN:
+        logger.error("Missing TELEGRAM_BOT_TOKEN")
         return
-
+    if not KRUTRIM_API_KEY:
+        logger.warning("⚠️ KRUTRIM_API_KEY not set — Krutrim models won't work")
+    if not OPENROUTER_API_KEY:
+        logger.warning("⚠️ OPENROUTER_API_KEY not set — OpenRouter models won't work")
     if OWNER_ID == 0:
-        logger.warning("⚠️ OWNER_ID not set! Message @userinfobot on Telegram to get your ID.")
+        logger.warning("⚠️ OWNER_ID not set!")
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
@@ -527,6 +530,7 @@ def main():
     app.add_handler(CommandHandler("memories", list_memories))
     app.add_handler(CommandHandler("forget", forget))
     app.add_handler(CommandHandler("model", show_model))
+    app.add_handler(CommandHandler("models", list_models))
     app.add_handler(CommandHandler("setmodel", set_model))
     app.add_handler(CommandHandler("admin", admin))
     app.add_handler(CommandHandler("addme", addme))
