@@ -42,7 +42,7 @@ openrouter_client = OpenAI(
 
 OWNER_ID = 1898491690  # ← Replace with your Telegram user ID
 
-APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607: "slippedsloppy0o0",
+APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607: "@slippedsloppy0o0",
     # 123456789: "Kaustuab",
 }
 
