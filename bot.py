@@ -42,7 +42,7 @@ openrouter_client = OpenAI(
 
 OWNER_ID = 1898491690  # ← Replace with your Telegram user ID
 
-APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607:"slippedsloppy0o0"
+APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607:"slippedsloppy0o0",
     # 123456789: "Kaustuab",
 }
 
@@ -78,8 +78,8 @@ MODELS = {
     "nemotron-9b":  {"provider": "openrouter", "model": "nvidia/nemotron-nano-9b-v2:free",                                               "label": "NVIDIA Nemotron Nano 9B 128K (free)"},
     "gpt120b":      {"provider": "openrouter", "model": "openai/gpt-oss-120b:free",                                                      "label": "OpenAI GPT-OSS 120B 131K (free) 🔥"},
     "gpt20b":       {"provider": "openrouter", "model": "openai/gpt-oss-20b:free",                                                       "label": "OpenAI GPT-OSS 20B 131K (free)"},
-    "qwen-coder":   {"provider": "openrouter", "model": "qwen/qwen3-coder-480b-a35b:free",                                               "label": "Qwen3 Coder 480B 262K (free) 💻"},
-    "qwen-next":    {"provider": "openrouter", "model": "qwen/qwen3-next-80b-a3b:free",                                                  "label": "Qwen3 Next 80B 262K (free)"},
+    "qwen-coder":   {"provider": "openrouter", "model": "qwen/qwen3-coder-480b-a35b-instruct:free",                                      "label": "Qwen3 Coder 480B 262K (free) 💻"},
+    "qwen-next":    {"provider": "openrouter", "model": "qwen/qwen3-next-80b-a3b-instruct:free",                                         "label": "Qwen3 Next 80B 262K (free)"},
     "llama-or":     {"provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free",                                        "label": "Llama 3.3 70B 65K (free) ⭐"},
     "liquid-t":     {"provider": "openrouter", "model": "liquid/lfm-2.5-1.2b-thinking:free",                                             "label": "Liquid LFM Thinking 33K (free)"},
     "liquid-i":     {"provider": "openrouter", "model": "liquid/lfm-2.5-1.2b-instruct:free",                                            "label": "Liquid LFM Instruct 33K (free)"},
