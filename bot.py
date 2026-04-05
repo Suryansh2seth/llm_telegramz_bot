@@ -42,7 +42,7 @@ openrouter_client = OpenAI(
 
 OWNER_ID = 1898491690  # ← Replace with your Telegram user ID
 
-APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607: "@slippedsloppy0o0",
+APPROVED_FRIENDS = {7560587006: "PriyanshuPSK",1141168607:"slippedsloppy0o0"
     # 123456789: "Kaustuab",
 }
 
@@ -60,36 +60,37 @@ def get_access_level(user_id: int) -> str:
 MODELS = {
 
     # ── Krutrim models ──────────────────────────────────────────────────────
-    "llama70b":      {"provider": "krutrim", "model": "Llama-3.3-70B-Instruct",          "label": "Llama 3.3 70B (Krutrim) ⭐"},
-    "llama8b":       {"provider": "krutrim", "model": "Meta-Llama-3-8B-Instruct",         "label": "Llama 3 8B (Krutrim)"},
-    "mistral7b":     {"provider": "krutrim", "model": "Mistral-7B-Instruct",              "label": "Mistral 7B (Krutrim)"},
-    "krutrim":       {"provider": "krutrim", "model": "Krutrim-spectre-v2",               "label": "Krutrim Spectre v2 (India's own)"},
+    "llama70b":     {"provider": "krutrim",    "model": "Llama-3.3-70B-Instruct",                                                        "label": "Llama 3.3 70B (Krutrim) ⭐"},
+    "llama8b":      {"provider": "krutrim",    "model": "Meta-Llama-3-8B-Instruct",                                                      "label": "Llama 3 8B (Krutrim)"},
+    "mistral7b":    {"provider": "krutrim",    "model": "Mistral-7B-Instruct",                                                           "label": "Mistral 7B (Krutrim)"},
+    "krutrim":      {"provider": "krutrim",    "model": "Krutrim-spectre-v2",                                                            "label": "Krutrim Spectre v2 (India's own)"},
 
-    # ── OpenRouter — Top free models (April 2026) ───────────────────────────
-    "deepseek":      {"provider": "openrouter", "model": "deepseek/deepseek-chat-v3-0324:free",     "label": "DeepSeek V3 (free) 🔥"},
-    "deepseek-r1":   {"provider": "openrouter", "model": "deepseek/deepseek-r1:free",               "label": "DeepSeek R1 Reasoning (free)"},
-    "llama4":        {"provider": "openrouter", "model": "meta-llama/llama-4-maverick:free",        "label": "Llama 4 Maverick (free)"},
-    "llama-or":      {"provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free",  "label": "Llama 3.3 70B (OpenRouter free)"},
-    "qwen3-235b":    {"provider": "openrouter", "model": "qwen/qwen3-235b-a22b:free",               "label": "Qwen3 235B (free)"},
-    "qwen3-30b":     {"provider": "openrouter", "model": "qwen/qwen3-30b-a3b:free",                 "label": "Qwen3 30B (free)"},
-    "qwen3-coder":   {"provider": "openrouter", "model": "qwen/qwen3-coder-480b-a35b:free",         "label": "Qwen3 Coder 480B (free) 💻"},
-    "gemma3-27b":    {"provider": "openrouter", "model": "google/gemma-3-27b-it:free",              "label": "Gemma 3 27B (free)"},
-    "gemma3-12b":    {"provider": "openrouter", "model": "google/gemma-3-12b-it:free",              "label": "Gemma 3 12B (free)"},
-    "gemma3-4b":     {"provider": "openrouter", "model": "google/gemma-3-4b-it:free",               "label": "Gemma 3 4B (fast, free)"},
-    "nemotron":      {"provider": "openrouter", "model": "nvidia/llama-3.1-nemotron-ultra-253b-v1:free", "label": "NVIDIA Nemotron 253B (free)"},
-    "nemotron-s":    {"provider": "openrouter", "model": "nvidia/nemotron-3-super-49b:free",        "label": "NVIDIA Nemotron Super 49B (free)"},
-    "mistral-s":     {"provider": "openrouter", "model": "mistralai/mistral-small-3.1-24b-instruct:free", "label": "Mistral Small 3.1 24B (free)"},
-    "mistral-dev":   {"provider": "openrouter", "model": "mistralai/devstral-small:free",           "label": "Devstral Small - Coding (free)"},
-    "phi4":          {"provider": "openrouter", "model": "microsoft/phi-4:free",                    "label": "Microsoft Phi-4 (free)"},
-    "phi4-mini":     {"provider": "openrouter", "model": "microsoft/phi-4-mini-instruct:free",      "label": "Microsoft Phi-4 Mini (fast, free)"},
-    "grok":          {"provider": "openrouter", "model": "x-ai/grok-4-fast:free",                   "label": "Grok 4 Fast (free) ⚡"},
-    "glm":           {"provider": "openrouter", "model": "zhipu-ai/glm-4.5-air:free",               "label": "GLM 4.5 Air (free)"},
-    "step":          {"provider": "openrouter", "model": "stepfun-ai/step-3-5-flash:free",          "label": "Step 3.5 Flash (free)"},
-    "minimax":       {"provider": "openrouter", "model": "minimax/minimax-m2.5:free",               "label": "MiniMax M2.5 (free)"},
-    "arcee":         {"provider": "openrouter", "model": "arcee-ai/trinity-large:free",             "label": "Arcee Trinity Large 400B (free)"},
-    "internlm":      {"provider": "openrouter", "model": "internlm/internlm3-8b-instruct:free",     "label": "InternLM3 8B (free)"},
-    "moonlight":     {"provider": "openrouter", "model": "moonshotai/moonlight-16a-instruct:free",  "label": "Moonlight 16A (free)"},
-    "auto":          {"provider": "openrouter", "model": "openrouter/auto",                         "label": "OpenRouter Auto (picks best free model)"},
+    # ── OpenRouter — Exact IDs from openrouter.ai/models (April 2026) ───────
+    "qwen-plus":    {"provider": "openrouter", "model": "qwen/qwen3.6-plus:free",                                                        "label": "Qwen3.6 Plus 1M ctx (free) 🔥"},
+    "step":         {"provider": "openrouter", "model": "stepfun/step-3.5-flash:free",                                                   "label": "Step 3.5 Flash 196B 256K (free)"},
+    "nemotron-s":   {"provider": "openrouter", "model": "nvidia/nemotron-3-super-120b-a12b:free",                                        "label": "NVIDIA Nemotron Super 120B 262K (free)"},
+    "arcee-l":      {"provider": "openrouter", "model": "arcee-ai/trinity-large-preview:free",                                           "label": "Arcee Trinity Large 131K (free)"},
+    "glm":          {"provider": "openrouter", "model": "z-ai/glm-4.5-air:free",                                                         "label": "GLM 4.5 Air multilingual 131K (free)"},
+    "nemotron-30b": {"provider": "openrouter", "model": "nvidia/nemotron-3-nano-30b-a3b:free",                                           "label": "NVIDIA Nemotron Nano 30B 256K (free)"},
+    "arcee-m":      {"provider": "openrouter", "model": "arcee-ai/trinity-mini:free",                                                    "label": "Arcee Trinity Mini 131K (free)"},
+    "nemotron-12b": {"provider": "openrouter", "model": "nvidia/nemotron-nano-12b-v2-vl:free",                                           "label": "NVIDIA Nemotron Nano 12B VL 128K (free)"},
+    "minimax":      {"provider": "openrouter", "model": "minimax/minimax-m2.5:free",                                                     "label": "MiniMax M2.5 197K ctx (free)"},
+    "nemotron-9b":  {"provider": "openrouter", "model": "nvidia/nemotron-nano-9b-v2:free",                                               "label": "NVIDIA Nemotron Nano 9B 128K (free)"},
+    "gpt120b":      {"provider": "openrouter", "model": "openai/gpt-oss-120b:free",                                                      "label": "OpenAI GPT-OSS 120B 131K (free) 🔥"},
+    "gpt20b":       {"provider": "openrouter", "model": "openai/gpt-oss-20b:free",                                                       "label": "OpenAI GPT-OSS 20B 131K (free)"},
+    "qwen-coder":   {"provider": "openrouter", "model": "qwen/qwen3-coder-480b-a35b:free",                                               "label": "Qwen3 Coder 480B 262K (free) 💻"},
+    "qwen-next":    {"provider": "openrouter", "model": "qwen/qwen3-next-80b-a3b:free",                                                  "label": "Qwen3 Next 80B 262K (free)"},
+    "llama-or":     {"provider": "openrouter", "model": "meta-llama/llama-3.3-70b-instruct:free",                                        "label": "Llama 3.3 70B 65K (free) ⭐"},
+    "liquid-t":     {"provider": "openrouter", "model": "liquid/lfm-2.5-1.2b-thinking:free",                                             "label": "Liquid LFM Thinking 33K (free)"},
+    "liquid-i":     {"provider": "openrouter", "model": "liquid/lfm-2.5-1.2b-instruct:free",                                            "label": "Liquid LFM Instruct 33K (free)"},
+    "dolphin":      {"provider": "openrouter", "model": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",                 "label": "Dolphin Mistral 24B 33K (free)"},
+    "hermes":       {"provider": "openrouter", "model": "nousresearch/hermes-3-llama-3.1-405b:free",                                     "label": "Hermes 3 Llama 405B 131K (free)"},
+    "llama3-2":     {"provider": "openrouter", "model": "meta-llama/llama-3.2-3b-instruct:free",                                        "label": "Llama 3.2 3B fast 131K (free)"},
+    "gemma27b":     {"provider": "openrouter", "model": "google/gemma-3-27b-it:free",                                                   "label": "Gemma 3 27B 131K (free)"},
+    "gemma4b":      {"provider": "openrouter", "model": "google/gemma-3-4b-it:free",                                                    "label": "Gemma 3 4B fast 128K (free)"},
+    "gemma3n-4b":   {"provider": "openrouter", "model": "google/gemma-3n-e4b-it:free",                                                  "label": "Gemma 3n E4B mobile 8K (free)"},
+    "gemma12b":     {"provider": "openrouter", "model": "google/gemma-3-12b-it:free",                                                   "label": "Gemma 3 12B 33K (free)"},
+    "gemma3n-2b":   {"provider": "openrouter", "model": "google/gemma-3n-e2b-it:free",                                                  "label": "Gemma 3n E2B ultra fast 8K (free)"},
 }
 
 DEFAULT_MODEL = "llama70b"
